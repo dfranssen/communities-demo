@@ -1,0 +1,12 @@
+version: "2.1"
+
+services:
+  communities-backend:
+    image: demo/communities-backend:0.0.1
+    ports:
+    - "2018:8080"
+
+  communities-frontend:
+    image: demo/communities-frontend:0.0.1
+    ports:
+    - "2019:80"
