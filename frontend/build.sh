@@ -1,0 +1,1 @@
+docker build -t demo/communities-frontend:0.0.1 .
