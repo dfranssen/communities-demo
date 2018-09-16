@@ -1,12 +1,53 @@
 version: "2.1"
 
+networks:
+  communities:
+    driver: bridge
+
 services:
   communities-backend:
     image: demo/communities-backend:0.0.1
+    networks:
+      communities:
+        aliases:
+        - backend
     ports:
     - "2018:8080"
+    - "2017:8787"
 
   communities-frontend:
     image: demo/communities-frontend:0.0.1
+    networks:
+      communities:
+        aliases:
+        - frontend
     ports:
     - "2019:80"
+
+  keycloak:
+    image: jboss/keycloak:4.4.0.Final
+    networks:
+      communities:
+        aliases:
+        - keycloak
+        # for easy testing this name is the same as in the /etc/hosts file, and internal/external ports (8081) are the same
+        # all containers on the same docker network can access eachother via the service name (or alias)
+    command: -b 0.0.0.0 -Djboss.http.port=8081
+    ports:
+      - "8081:8081"
+    environment:
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=password
+    depends_on:
+      - keycloak-db
+
+  keycloak-db:
+    image: postgres:10.5-alpine
+    networks:
+      communities:
+        aliases:
+          - postgres
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=password

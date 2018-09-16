@@ -4,11 +4,16 @@
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width, user-scalable=no"/>
         <title>Communities</title>
+        <script src="js/keycloak.js"></script>
     </head>
     <body>
+        <span id="userDetails" style="display: none">
+            <a id="logoutUrl">Logout</a>
+            <span id="userName"></span>
+        </span>
         <h2>Communities</h2>
         <ul id="communities"></ul>
-        <div id="add">
+        <div id="add" style="display: none">
             <input id="nameInput" placeholder="new community"/>
             <button id="addButton">Add</button>
         </div>

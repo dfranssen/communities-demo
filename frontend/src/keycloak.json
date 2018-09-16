@@ -1,0 +1,8 @@
+{
+  "realm": "demo",
+  "auth-server-url": "http://keycloak:8081/auth",
+  "ssl-required": "external",
+  "resource": "communities",
+  "public-client": true,
+  "confidential-port": 0
+}
