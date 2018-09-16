@@ -1,6 +1,6 @@
 # Solution
 ## docker-compose.yml
-Add the following service to the docker-compose.yml (mind the spaces according to the previous services):
+Add the following services to the `docker-compose.yml` (mind the spaces according to the previous services):
 
 ```
   keycloak:
