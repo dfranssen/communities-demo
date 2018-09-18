@@ -97,10 +97,10 @@ This solution is built on top of [https://github.com/dfranssen/communities-demo/
     |- communities
        |- login
           |- resources
-             |- css
-                |- communities.css
-             |- img
-                |- logo.png
+          |  |- css
+          |  |  |- communities.css
+          |  |- img
+          |     |- logo.png
           |- theme.properties
     ```
 - `communities.css`:
