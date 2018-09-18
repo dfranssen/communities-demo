@@ -9,8 +9,9 @@ Add the following services to the `docker-compose.yml` (mind the spaces accordin
       communities:
         aliases:
         - keycloak
+    command: -b 0.0.0.0 -Djboss.http.port=8081
     ports:
-      - "8081:8080"
+      - "8081:8081"
     environment:
       - KEYCLOAK_USER=admin
       - KEYCLOAK_PASSWORD=password
@@ -41,7 +42,7 @@ Add following to the `/etc/hosts` file:
 ## Keycloak configuration
 Browse to the [Administration Console ](http://keycloak:8081/auth) and login with the user `admin` and password `password`.
 
-One could configure the realm by either importing the file `demo-realm.json` via Manage/Import or by executing following steps manually for a better comprehension:
+One could configure the realm by either importing the file `demo-realm.json` via Manage/Import (Note: users are not included) or by executing following steps manually for a better comprehension:
 
 ### Add realm, roles, groups and users
 1. add realm `demo`
@@ -178,7 +179,7 @@ Perform following changes in the code:
     ```
 
 ## Next steps
-1. customize the login screen with your own logo
-2. log events to an [InfluxDB](https://www.influxdata.com/time-series-platform/) and visualize them with [Grafana](https://grafana.com). See [influxdb-keycloak-event-listener](https://github.com/dfranssen/influxdb-keycloak-event-listener) for more information.
+1. customize the login screen with your own logo. See [themes](https://www.keycloak.org/docs/latest/server_development/index.html#creating-a-theme)
+2. log events into an [InfluxDB](https://www.influxdata.com/time-series-platform/) and visualize them with [Grafana](https://grafana.com). See [influxdb-keycloak-event-listener](https://github.com/dfranssen/influxdb-keycloak-event-listener) for more information.
 
 See the `extra` branch for the result.
