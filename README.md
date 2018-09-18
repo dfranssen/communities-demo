@@ -1,4 +1,7 @@
 # Solution
+
+This solution is built on top of [https://github.com/dfranssen/communities-demo/tree/master](https://github.com/dfranssen/communities-demo/tree/master)
+
 ## docker-compose.yml
 Add the following services to the `docker-compose.yml` (mind the spaces according to the previous services):
 
