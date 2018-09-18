@@ -25,7 +25,7 @@ services:
     - "2019:80"
 
   keycloak:
-    image: jboss/keycloak:4.4.0.Final
+    image: demo/keycloak:4.4.0.Final
     networks:
       communities:
         aliases:
@@ -40,6 +40,7 @@ services:
       - KEYCLOAK_PASSWORD=password
     depends_on:
       - keycloak-db
+      - influx
 
   keycloak-db:
     image: postgres:10.5-alpine
@@ -51,3 +52,31 @@ services:
       - POSTGRES_DB=keycloak
       - POSTGRES_USER=keycloak
       - POSTGRES_PASSWORD=password
+
+  influx:
+    image: influxdb:1.6.2-alpine
+    ports:
+      - "8086:8086"
+    networks:
+      communities:
+        aliases:
+          # default used in influxdb-keycloak-event-listener
+          - influxdb
+    environment:
+      # defaults used in influxdb-keycloak-event-listener
+      - INFLUXDB_DB=keycloak
+      - INFLUXDB_USER=root
+      - INFLUXDB_USER_PASSWORD=root
+
+  grafana:
+    image: grafana/grafana:5.2.4
+    networks:
+      communities:
+        aliases:
+          - grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=password
+    depends_on:
+      - influx

@@ -1,185 +1,182 @@
-# Solution
-## docker-compose.yml
-Add the following services to the `docker-compose.yml` (mind the spaces according to the previous services):
+# Extra solution
 
-```
-  keycloak:
-    image: jboss/keycloak:4.4.0.Final
-    networks:
-      communities:
+This solution is built on top of [https://github.com/dfranssen/communities-demo/tree/solution](https://github.com/dfranssen/communities-demo/tree/solution)
+
+## Save Keycloak events to InfluxDB
+
+### influxdb-keycloak-event-listener
+- See https://github.com/dfranssen/influxdb-keycloak-event-listener
+
+    Note the defaults in the Configuration section as those are being set in the `influx` service, see `add extra services to docker-compose` below
+
+- Compile the jar and copy it to this project in a new folder named `custom-keycloak`.
+
+### Extend the Keycloak Docker image
+- Create the file `custom-keycloak/Dockerfile` with the contents:
+    ```
+    FROM jboss/keycloak:4.4.0.Final
+    RUN mkdir -p /opt/jboss/keycloak/providers
+    COPY influxdb-keycloak-event-listener-jar-with-dependencies.jar /opt/jboss/keycloak/providers/
+    ```
+
+- in the `custom-keycloak` folder create and execute `build.sh` in order to build the image:
+    ```
+    docker build -t demo/keycloak:4.4.0.Final .
+    ```
+
+### Add extra services to docker-compose
+- add stock `influx` and `grafana` services:
+    ```
+    influx:
+      image: influxdb:1.6.2-alpine
+      ports:
+        - "8086:8086"
+      networks:
+        communities:
         aliases:
-        - keycloak
-    command: -b 0.0.0.0 -Djboss.http.port=8081
-    ports:
-      - "8081:8081"
-    environment:
-      - KEYCLOAK_USER=admin
-      - KEYCLOAK_PASSWORD=password
-    depends_on:
-      - keycloak-db
+            - influxdb
+      environment:
+        - INFLUXDB_DB=keycloak
+        - INFLUXDB_USER=root
+        - INFLUXDB_USER_PASSWORD=root
 
-  keycloak-db:
-    image: postgres:10.5-alpine
-    networks:
-      communities:
+    grafana:
+      image: grafana/grafana:5.2.4
+      networks:
+        communities:
         aliases:
-          - postgres
-    environment:
-      - POSTGRES_DB=keycloak
-      - POSTGRES_USER=keycloak
-      - POSTGRES_PASSWORD=password
-```
-
-Execute `run.sh` again to spinup the extra containers.
-
-## Edit hosts file
-Add following to the `/etc/hosts` file:
-
-```
-127.0.0.1       keycloak
-```
-
-## Keycloak configuration
-Browse to the [Administration Console ](http://keycloak:8081/auth) and login with the user `admin` and password `password`.
-
-One could configure the realm by either importing the file `demo-realm.json` via Manage/Import (Note: users are not included) or by executing following steps manually for a better comprehension:
-
-### Add realm, roles, groups and users
-1. add realm `demo`
-2. create roles `canView` and `canEdit` 
-3. create group `users`, with role mappings `canView` and set `users` group as default group
-4. create group `admins`, with role mappings `canView` and `canEdit`
-5. create a new user `user` and set `emailVerified`to true. After saving, click on the credentials tab, set a password, `temporary` to off and click on `reset password` (default users group with canRead role is applied)
-6. create a new user `manager` and set `emailVerified` to true. After saving, click on the credentials tab, set a password, `temporary` to off and click on `reset password`. Add the `admins` group
-
-### Create an API client
-1. create a client with clientID `communities-api`, protocol `openid-connect`, rootUrl `http://communities-api:2018`.
-2. In the next screen, add a name, make sure that `bearer-only` is selected as access type before saving.
-3. On the installation tab, click `Keycloak OIDC JSON` as format and download it to the `backend/src/main/webapp/WEB-INF` folder
-
-### Create a client for the frontend
-1. create a client with clientID `communities`, protocol `openid-connect`, rootUrl `http://communities:2019`.
-2. In the next screen, add a name, choose a login theme, make sure that `public` is selected as access type before saving. (also add `localhost:8080` to valid redirect url and web origins if you use the live-server)
-3. On the installation tab, click `Keycloak OIDC JSON` as format and download it to the `frontend/src` folder
-4. Download the `keycloak.js` from `http://keycloak:8081/auth/js/keycloak.js` and save it to the `frontend/src/js` folder
-
-## Backend changes
-WildFly with Keycloak adapter [Docker image](https://hub.docker.com/r/jboss/keycloak-adapter-wildfly/) is being used for this demo. There are many adapters, see the [Keycloak documentation](https://www.keycloak.org/docs/latest/securing_apps/index.html#openid-connect-3).
-
-1. create `WEB-INF/web.xml` file and add:
+            - grafana
+      ports:
+        - "3000:3000"
+      environment:
+        - GF_SECURITY_ADMIN_PASSWORD=password
+      depends_on:
+        - influx
     ```
-    <login-config>
-        <auth-method>KEYCLOAK</auth-method>
-    </login-config>
-    ```
-2. `CommunitiesResource.java`
-    ```
-    //... class level
-    @DeclareRoles({"canView", "canEdit"})
-    //...
-    @Inject
-    Instance<Principal> principal;
+- change the keycloak image from `jboss/keycloak:4.4.0.Final` to the custom built `demo/keycloak:4.4.0.Final`
+- add an extra depends_on for keycloak: `influx`
+- execute `run.sh` again to spinup the extra containers.
 
-    //... allCommunities method
-    @RolesAllowed("canView")
-    //...
-    System.out.println(String.format("User %s requested all communities", principal.get().getName()));
+### Keycloak event configuration
+- Browse to the [Administration Console](http://keycloak:8081/auth) and login with the user `admin` and password `password`.
 
-    //... addCommunity method
-    @RolesAllowed("canEdit")
-    //... add argument: @Context HttpServletRequest request
-    String username = ((KeycloakPrincipal) request.getUserPrincipal()).getKeycloakSecurityContext().getToken().getPreferredUsername();
-    ```
-3. create optionally `EJBAccessExceptionMapper.java`
-    ```
-    @Provider
-    public class EJBAccessExceptionMapper implements ExceptionMapper<EJBAccessException> {
+- One could configure the realm by either importing the file `demo-realm.json` via Manage/Import (Note: users are not included) or by executing following steps manually for a better comprehension:
 
-        @Override
-        public Response toResponse(EJBAccessException exception) {
-            return Response.status(Response.Status.FORBIDDEN).build();
-        }
+    1. open the realm `demo`
+    2. in the left menu click on `Manage/Events` and go the `Config` tab
+    3. click in the `Event Listeners` input box and select `influxDB`
+    4. click on `Save`
+
+### Configure Grafana
+- Browse to [http://localhost:3000](http://localhost:3000) and login with the user `admin` and password `password`.
+- click on `Add data source`
+- fill out following settings:
+    ```
+    Name: influx
+    Type: InfluxDB
+    
+    HTTP
+    URL: http://influxdb:8086
+
+    InfluxDB Details
+    Database: keycloak
+    User: root
+    Password: root
+    ```
+- click on `Save & Test`
+- in the left menu, click on the `+` icon, and on `import`
+- copy the `raw` dashboard content from [https://raw.githubusercontent.com/dfranssen/influxdb-keycloak-event-listener/master/grafana-dashboards/keycloak-logins.json](https://raw.githubusercontent.com/dfranssen/influxdb-keycloak-event-listener/master/grafana-dashboards/keycloak-logins.json) and paste it into the `Or paste JSON` textbox
+- click on `Load` and next on `Import`
+- login on [http://communities:2019](http://communities:2019/) and see the live events in the Grafana dashboard
+
+## Custom login theme
+### file structure
+- create following file structure in the `custom-keycloak` folder:
+    ```
+    themes
+    |- communities
+       |- login
+          |- resources
+             |- css
+                |- communities.css
+             |- img
+                |- logo.png
+          |- theme.properties
+    ```
+- `communities.css`:
+    ```
+    #kc-header-wrapper {
+    font-size: 0px;
+    background: url(../img/logo.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 82px;
+    padding-top: 20px;
     }
-    ```
-4. `build.sh` and `run.sh` again to spin up a backend container with the latest changes
 
-## Frontend changes
-When developping frontend applications it is very productive to live reload the changes directly in the browser. E.g. [live-server](https://www.npmjs.com/package/live-server)
+    .login-pf body {
+        background-image: unset;
+    }
 
-```
-# only install once
-sudo npm install -g live-server
+    .card-pf {
+        background: #ddd;
+        margin: 0 auto;
+        margin-top: 5px;
+        padding: 0 20px;
+        max-width: 500px;
+        border-top: 0;
+        box-shadow: 0 0 0;
+    }
 
-cd frontend/src
-live-server --browser=chrome
-```
-
-Perform following changes in the code:
-1. `index.html`:
-    ```
-    //... add in the head section
-    <script src="js/keycloak.js"></script>
-
-    //... add as first line in the body
-    <span id="userDetails" style="display: none">
-        <a id="logoutUrl">Logout</a>
-        <span id="userName"></span>
-    </span>
-
-    //... add style to hide
-    <div id="add" style="display: none">
-    ```
-2. `app.js`:
-    ```
-    //... add in constructor
-    this.keycloak = new Keycloak();
-    this.keycloak.init({ onLoad: 'login-required' }).then((authenticated) => {
-        if(authenticated) {
-            this.loadPage();
-        } else {
-            alert("User could not be authenticated...");
+    @media only screen and (max-width: 767px) {
+        #kc-header-wrapper {
         }
-    }).catch(() => {
-        alert("Authentication init failed");
-    });
 
-    //...
-    this.getCommunities = this.getCommunities.bind(this);
-    this.addCommunity = this.addCommunity.bind(this);
-    //window.onload = this.getCommunities;
-
-    //... add new function
-    loadPage() {
-        this.checkTokenBefore(this.getCommunities);
-        document.querySelector("#userName").innerHTML = this.keycloak.tokenParsed.preferred_username;
-        document.querySelector("#logoutUrl").setAttribute("href", this.keycloak.createLogoutUrl());
-        document.querySelector("#userDetails").style.display = 'block';
-        if (this.keycloak.hasRealmRole('canEdit')) {
-            document.querySelector("#add").style.display = 'block';
+        .login-pf-page .card-pf {
+            max-width: none;
+            margin-left: 0;
+            margin-right: 0;
+            padding-top: 0;
+            background-color: #fff;
         }
     }
 
-    //... in both fetches, add additional header
-    'Authorization': 'Bearer ' + this.keycloak.token
-
-    //... add new funtion
-    checkTokenBefore(f, params) {
-        this.keycloak.updateToken(30).then((refreshed) => {
-            f(params);
-        }).catch(() => {
-            alert('Failed to refresh the token, or the session has expired');
-        });
+    @media only screen and (min-width: 767px) {
+        .login-pf-page .card-pf {
+            padding: 20px 40px 30px 40px;
+        }
     }
+    ```
+- as logo.png download [http://ditavision.com/images/logo.png](http://ditavision.com/images/logo.png) or your own
 
-    //... change funtion call in constructor
-    this.checkTokenBefore(this.addCommunity, { name: name});
-
-    //... change funtion call in addCommunity
-    .then((r) => { this.checkTokenBefore(this.getCommunities); })
+- `theme.properties`:
+    ```
+    parent=keycloak
+    import=common/keycloak
+    
+    styles=lib/patternfly/css/patternfly.css lib/zocial/zocial.css css/login.css css/communities.css
     ```
 
-## Next steps
-1. customize the login screen with your own logo. See [themes](https://www.keycloak.org/docs/latest/server_development/index.html#creating-a-theme)
-2. log events into an [InfluxDB](https://www.influxdata.com/time-series-platform/) and visualize them with [Grafana](https://grafana.com). See [influxdb-keycloak-event-listener](https://github.com/dfranssen/influxdb-keycloak-event-listener) for more information.
+### Extend the Keycloak Docker image
+- Add following line to the end of the file `custom-keycloak/Dockerfile`:
+    ```
+    COPY themes /opt/jboss/keycloak/themes/
+    ```
 
-See the `extra` branch for the result.
+- in the `custom-keycloak` folder execute `build.sh` again in order to build the image
+- execute `run.sh` again to spin up the newly built custom Keycloak
+
+### Keycloak theme configuration
+- Browse to the [Administration Console](http://keycloak:8081/auth) and login with the user `admin` and password `password`.
+
+- One could configure the realm by either importing the file `demo-realm.json` via Manage/Import (Note: users are not included) or by executing following steps manually for a better comprehension:
+
+    1. open the realm `demo`
+    2. in the left menu click on `Configure/Realm Settings` and go the `Themes` tab
+    3. select `communities` as Login Theme
+    4. click on `Save`
+    5. in the left menu click on `Configure/Clients` and select `communites`
+    6. in the default tab `Settings` select `communities` as Login Theme
+    7. click on `Save`
+
+- Go to [http://communities:2019](http://communities:2019/) and see the customized login screen (CTRL+F5 might be needed if the styles are cached)

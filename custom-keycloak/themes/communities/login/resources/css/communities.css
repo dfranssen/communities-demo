@@ -1,0 +1,41 @@
+#kc-header-wrapper {
+    font-size: 0px;
+    background: url(../img/logo.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 82px;
+    padding-top: 20px;
+}
+
+.login-pf body {
+    background-image: unset;
+}
+
+.card-pf {
+    background: #ddd;
+    margin: 0 auto;
+    margin-top: 5px;
+    padding: 0 20px;
+    max-width: 500px;
+    border-top: 0;
+    box-shadow: 0 0 0;
+}
+
+@media only screen and (max-width: 767px) {
+    #kc-header-wrapper {
+    }
+
+    .login-pf-page .card-pf {
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+        padding-top: 0;
+        background-color: #fff;
+    }
+}
+
+@media only screen and (min-width: 767px) {
+    .login-pf-page .card-pf {
+        padding: 20px 40px 30px 40px;
+    }
+}
