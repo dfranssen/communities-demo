@@ -62,10 +62,10 @@ This solution is built on top of [https://github.com/dfranssen/communities-demo/
 
 - One could configure the realm by either importing the file `demo-realm.json` via Manage/Import (Note: users are not included) or by executing following steps manually for a better comprehension:
 
-    1. open the realm `demo`
-    2. in the left menu click on `Manage/Events` and go the `Config` tab
-    3. click in the `Event Listeners` input box and select `influxDB`
-    4. click on `Save`
+    - open the realm `demo`
+    - in the left menu click on `Manage/Events` and go the `Config` tab
+    - click in the `Event Listeners` input box and select `influxDB`
+    - click on `Save`
 
 ### Configure Grafana
 - Browse to [http://localhost:3000](http://localhost:3000) and login with the user `admin` and password `password`.
@@ -106,12 +106,12 @@ This solution is built on top of [https://github.com/dfranssen/communities-demo/
 - `communities.css`:
     ```
     #kc-header-wrapper {
-    font-size: 0px;
-    background: url(../img/logo.png);
-    background-repeat: no-repeat;
-    background-position: center;
-    height: 82px;
-    padding-top: 20px;
+        font-size: 0px;
+        background: url(../img/logo.png);
+        background-repeat: no-repeat;
+        background-position: center;
+        height: 82px;
+        padding-top: 20px;
     }
 
     .login-pf body {
@@ -171,12 +171,12 @@ This solution is built on top of [https://github.com/dfranssen/communities-demo/
 
 - One could configure the realm by either importing the file `demo-realm.json` via Manage/Import (Note: users are not included) or by executing following steps manually for a better comprehension:
 
-    1. open the realm `demo`
-    2. in the left menu click on `Configure/Realm Settings` and go the `Themes` tab
-    3. select `communities` as Login Theme
-    4. click on `Save`
-    5. in the left menu click on `Configure/Clients` and select `communites`
-    6. in the default tab `Settings` select `communities` as Login Theme
-    7. click on `Save`
+    - open the realm `demo`
+    - in the left menu click on `Configure/Realm Settings` and go the `Themes` tab
+    - select `communities` as Login Theme
+    - click on `Save`
+    - in the left menu click on `Configure/Clients` and select `communites`
+    - in the default tab `Settings` select `communities` as Login Theme
+    - click on `Save`
 
 - Go to [http://communities:2019](http://communities:2019/) and see the customized login screen (CTRL+F5 might be needed if the styles are cached)
